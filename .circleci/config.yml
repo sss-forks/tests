@@ -1,0 +1,35 @@
+version: 2.1
+
+orbs:
+  aws-ecr: circleci/aws-ecr@7.2.0
+  slack: circleci/slack@4.4.4
+
+jobs:
+  build-docker:
+    machine:
+      image: ubuntu-2004:202010-01
+    resource_class: large
+    steps:
+      - checkout
+      - run:
+          command: |
+            ls
+      - aws-ecr/build-and-push-image:
+          create-repo: true
+          dockerfile: project/Dockerfile
+          path: ..
+          repo: circleci-ethereum-tests
+          tag: "$CIRCLE_SHA1"
+      - slack/notify:
+          event: fail
+          mentions: "@here"
+          template: basic_fail_1
+      - slack/notify:
+          event: pass
+          template: success_tagged_deploy_1
+
+workflows:
+  version: 2
+  tests:
+    jobs:
+      - build-docker
